@@ -810,13 +810,10 @@ Fixpoint factorial (n:nat) : nat :=
   end.
 
 Example test_factorial1: (factorial 3) = 6.
-Proof. 
-  reflexivity. 
-Qed.
+Proof. reflexivity. Qed.
 Example test_factorial2: (factorial 5) = (mult 10 12).
-Proof.
-  reflexivity. 
-Qed.
+Proof. reflexivity. Qed.
+
 
 (** [] *)
 
@@ -1386,6 +1383,7 @@ Proof.
   destruct n.
   - simpl. reflexivity.
   - simpl. reflexivity.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
@@ -1397,6 +1395,7 @@ Proof.
     know what's there for future reference.)
 
     Recall the notation definitions for infix plus and times: *)
+
 
 Notation "x + y" := (plus x y)
                        (at level 50, left associativity)
@@ -1438,6 +1437,7 @@ Notation "x * y" := (mult x y)
 (** ** Fixpoints and Structural Recursion (Optional) *)
 
 (** Here is a copy of the definition of addition: *)
+
 
 Fixpoint plus' (n : nat) (m : nat) : nat :=
   match n with
@@ -1484,16 +1484,14 @@ Fixpoint plus' (n : nat) (m : nat) : nat :=
     Use the tactics you have learned so far to prove the following
     theorem about boolean functions. *)
 
-Theorem identity_fn_applied_twice :
-  forall (f : bool -> bool),
+Theorem identity_fn_applied_twice : 
+  forall (f : bool -> bool), 
   (forall (x : bool), f x = x) ->
   forall (b : bool), f (f b) = b.
 Proof.
-intros.
-rewrite -> H.
-rewrite -> H.
-simpl.
-reflexivity.
+  intros f H_f_id b.
+  rewrite H_f_id. rewrite H_f_id.
+  reflexivity.
 Qed.
 
 (** [] *)
@@ -1648,7 +1646,7 @@ Theorem letter_comparison_Eq :
   forall l, letter_comparison l l = Eq.
 Proof.
   intros l.
-  reflexivity.
+  destruct l; simpl; reflexivity.
 Qed.
 (** [] *)
 
@@ -1778,7 +1776,18 @@ Theorem lower_letter_lowers:
     letter_comparison (lower_letter l) l = Lt.
 Proof.
   intros l H.
-Admitted.
+  destruct l.
+  - (* Case l = A *)
+    simpl. reflexivity.
+  - (* Case l = B *)
+    simpl. reflexivity.
+  - (* Case l = C *)
+    simpl. reflexivity.
+  - (* Case l = D *)
+    simpl. reflexivity.
+  - (* Case l = F, which should be impossible due to our hypothesis *)
+    discriminate H.
+Qed.
 
 (** [] *)
 
@@ -1799,75 +1808,55 @@ Admitted.
     cases. (Our solution is under 10 lines of code, total.) *)
 Definition lower_grade (g : grade) : grade :=
   match g with
-  | Grade F Minus => g (* The lowest grade, remains unchanged *)
-  | Grade l m =>
-      match m with
-      | Plus => Grade l Natural
-      | Natural => Grade l Minus
-      | Minus => if letter_comparison l F = Eq then g else Grade (lower_letter l) Plus
-      end
+  | Grade F Minus => Grade F Minus
+  | Grade l Plus => Grade l Natural
+  | Grade l Natural => Grade l Minus
+  | Grade l Minus => Grade (lower_letter l) Plus
   end.
-
+  
+  
 Example lower_grade_A_Plus :
   lower_grade (Grade A Plus) = (Grade A Natural).
 Proof.
-  unfold lower_grade.
-  reflexivity.
-Qed.
+  simpl. reflexivity. Qed.
 
 Example lower_grade_A_Natural :
   lower_grade (Grade A Natural) = (Grade A Minus).
 Proof.
-  unfold lower_grade.
-  reflexivity.
-Qed.
+  simpl. reflexivity. Qed.
 
 Example lower_grade_A_Minus :
   lower_grade (Grade A Minus) = (Grade B Plus).
 Proof.
-  unfold lower_grade.
-  reflexivity.
-Qed.
+  simpl. reflexivity. Qed.
 
 Example lower_grade_B_Plus :
   lower_grade (Grade B Plus) = (Grade B Natural).
 Proof.
-  unfold lower_grade.
-  reflexivity.
-Qed.
+  simpl. reflexivity. Qed.
 
 Example lower_grade_F_Natural :
   lower_grade (Grade F Natural) = (Grade F Minus).
 Proof.
-  unfold lower_grade.
-  reflexivity.
-Qed.
+  simpl. reflexivity. Qed.
 
 Example lower_grade_twice :
   lower_grade (lower_grade (Grade B Minus)) = (Grade C Natural).
 Proof.
-  unfold lower_grade.
-  reflexivity.
-Qed.
+  simpl. reflexivity. Qed.
 
 Example lower_grade_thrice :
   lower_grade (lower_grade (lower_grade (Grade B Minus))) = (Grade C Minus).
 Proof.
-  unfold lower_grade.
-  reflexivity.
-Qed.
+  simpl. reflexivity. Qed.
+
 
 (** Note: Coq makes no distinction between an [Example] and a
     [Theorem]. We state this one as a [Theorem] only as a hint that we
     will use it in proofs below. *)
 Theorem lower_grade_F_Minus : lower_grade (Grade F Minus) = (Grade F Minus).
 Proof.
-  unfold lower_grade.
-  (* Given the definition of lower_grade, the case for Grade F Minus
-     explicitly returns the grade unchanged. Therefore, the proof
-     can be completed by reflexivity, assuming the definition of
-     lower_grade matches the sketch provided. *)
-  reflexivity.
+  simpl. reflexivity.
 Qed.
 
 (* GRADE_THEOREM 0.25: lower_grade_A_Plus *)
@@ -1899,9 +1888,8 @@ Theorem lower_grade_lowers :
     grade_comparison (Grade F Minus) g = Lt ->
     grade_comparison (lower_grade g) g = Lt.
 Proof.
-  intros g H.
-  destruct g as [l m]; simpl in *.
-Admitted.
+Admitted. 
+
 (** [] *)
 
 (** Now that we have implemented and tested a function that lowers a
@@ -1960,7 +1948,11 @@ Theorem no_penalty_for_mostly_on_time :
     apply_late_policy late_days g = g.
 Proof.
   intros late_days g H.
-Admitted.
+  rewrite apply_late_policy_unfold. (* Use the unfold theorem to rewrite apply_late_policy to its definition *)
+  rewrite H. (* Apply the hypothesis that late_days <? 9 = true *)
+  reflexivity. (* Conclude the proof since g = g is trivially true *)
+Qed.
+
 (** [] *)
 
 (** The following theorem proves that, as long as a student has
@@ -1978,9 +1970,12 @@ Theorem grade_lowered_once :
     (grade_comparison (Grade F Minus) g = Lt) ->
     (apply_late_policy late_days g) = (lower_grade g).
 Proof.
-  intros late_days g H1 H2 H3.
-  unfold apply_late_policy.
-Admitted.
+  intros late_days g H9 H17 Hg.
+  rewrite apply_late_policy_unfold.
+  rewrite H9. (* Since late_days <? 9 is false, we move past the first condition *)
+  rewrite H17. (* late_days <? 17 being true means we pick the branch lowering the grade once *)
+  reflexivity.
+Qed.
 
 (** [] *)
 End LateDays.
@@ -2023,19 +2018,21 @@ Inductive bin : Type :=
     for binary numbers, and a function [bin_to_nat] to convert
     binary numbers to unary numbers. *)
 
-Fixpoint incr (m:bin) : bin
+Fixpoint incr (m:bin) : bin :=
   match m with
-    | X => Z X
-    | Y m' => Z m'
-    | Z m' => Y (incr m')
+  | Z => B1 Z                     (* Incrementing 0 gives 1 *)
+  | B0 m' => B1 m'                (* No carry required, just change 0 to 1 *)
+  | B1 m' => B0 (incr m')         (* Carry the increment *)
   end.
 
-Fixpoint bin_to_nat (m:bin) : nat
+
+Fixpoint bin_to_nat (m:bin) : nat :=
   match m with
-    | X => O
-    | Y m' => 2 * (bin_to_nat m')
-    | Z m' => 1 + 2 * (bin_to_nat m')
+  | Z => 0                           (* The base case; binary 0 is natural 0 *)
+  | B0 m' => 2 * bin_to_nat m'       (* Doubling for each B0 *)
+  | B1 m' => 1 + 2 * bin_to_nat m'   (* Doubling for each B1, plus one *)
   end.
+
 
 (** The following "unit tests" of your increment and binary-to-unary
     functions should pass after you have defined those functions correctly.
@@ -2044,24 +2041,25 @@ Fixpoint bin_to_nat (m:bin) : nat
     next chapter. *)
 
 Example test_bin_incr1 : (incr (B1 Z)) = B0 (B1 Z).
-(* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example test_bin_incr2 : (incr (B0 (B1 Z))) = B1 (B1 Z).
-(* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example test_bin_incr3 : (incr (B1 (B1 Z))) = B0 (B0 (B1 Z)).
-(* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example test_bin_incr4 : bin_to_nat (B0 (B1 Z)) = 2.
-(* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example test_bin_incr5 :
         bin_to_nat (incr (B1 Z)) = 1 + bin_to_nat (B1 Z).
-(* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example test_bin_incr6 :
         bin_to_nat (incr (incr (B1 Z))) = 2 + bin_to_nat (B1 Z).
-(* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 
 (** [] *)
 
